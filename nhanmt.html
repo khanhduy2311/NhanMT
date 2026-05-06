@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="vi">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matrix Chain Multiplication - Nhân ma trận dây chuyền</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+</head>
+
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Matrix Chain Multiplication</h1>
+            <p>Nhân ma trận dây chuyền tối ưu</p>
+        </div>
+
+        <div class="content">
+            <div class="info-box">
+                <strong>Bài toán:</strong> Cho N ma trận A₁, A₂, ..., Aₙ. Nhập đầy đủ giá trị các phần tử trong mỗi ma
+                trận.
+                Tìm cách đặt dấu ngoặc tối ưu để số phép nhân vô hướng là ít nhất khi tính tích A₁ × A₂ × ... × Aₙ
+                <div class="formula">
+                    (A ∗ B) ∗ C = A ∗ (B ∗ C) - Tính kết hợp
+                </div>
+                <strong>Lưu ý:</strong> Số cột của ma trận trước phải bằng số hàng của ma trận sau!
+            </div>
+
+            <div class="input-section">
+                <div class="input-group">
+                    <label for="numMatrices">Số lượng ma trận (N):</label>
+                    <input type="number" id="numMatrices" class="num-matrices-input" min="2" max="10" value="3"
+                        oninput="generateMatrixInputs()">
+                </div>
+
+                <div id="matricesContainer" class="matrices-container"></div>
+
+                <div id="validationResult"></div>
+
+                <div class="input-group">
+                    <label>Chọn phương pháp giải: <button class="btn-view-algo" onclick="openAlgoModal()">Xem
+                            thuật toán</button></label>
+                    <div class="method-selection">
+                        <div class="method-option">
+                            <input type="radio" id="method1" name="method" value="divide-conquer" checked>
+                            <label for="method1" class="method-label">
+                                <strong>1. Chia để trị</strong>
+                                <small>Đệ quy Top-Down &mdash; O(2ⁿ)</small>
+                            </label>
+                        </div>
+                        <div class="method-option">
+                            <input type="radio" id="method2" name="method" value="bottom-up">
+                            <label for="method2" class="method-label">
+                                <strong>2. Quy hoạch động</strong>
+                                <small>Bottom-Up &mdash; O(n³)</small>
+                            </label>
+                        </div>
+                        <div class="method-option">
+                            <input type="radio" id="method3" name="method" value="memoization">
+                            <label for="method3" class="method-label">
+                                <strong>3. Top-Down + Memo</strong>
+                                <small>Memorization &mdash; O(n³)</small>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="btn-container">
+                    <button class="btn-random" onclick="fillRandomValues()">Ngẫu nhiên</button>
+                    <button class="btn-calculate" onclick="calculate()" id="calculateBtn">Tính toán</button>
+                    <button class="btn-reset" onclick="resetForm()">Làm mới</button>
+                </div>
+            </div>
+
+            <div id="results" class="results"></div>
+        </div>
+    </div>
+
+    <!-- Algorithm Modal -->
+    <div class="algo-modal-overlay" id="algoModal" onclick="closeAlgoModalOverlay(event)">
+        <div class="algo-modal">
+            <div class="algo-modal-header">
+                <h3>&#128214; Thuật toán &mdash; Matrix Chain Multiplication</h3>
+                <button class="btn-close-modal" onclick="closeAlgoModal()">&#10005;</button>
+            </div>
+            <div class="algo-tab-bar">
+                <button class="algo-tab active" onclick="switchAlgoTab(0,this)">Chia để trị</button>
+                <button class="algo-tab" onclick="switchAlgoTab(1,this)">Quy hoạch động</button>
+                <button class="algo-tab" onclick="switchAlgoTab(2,this)">Memorization</button>
+            </div>
+            <div class="algo-modal-body">
+
+                <!-- Tab 0: Divide & Conquer -->
+                <div class="algo-panel active" id="algo-panel-0">
+                    <div class="algo-complexity">
+                        <span class="badge badge-time">Time: O(2ⁿ)</span>
+                        <span class="badge badge-space">Space: O(n)</span>
+                        <span class="badge badge-type">Đệ quy thuần</span>
+                    </div>
+                    <p class="algo-desc">Phân rã bài toán thành các bài toán con nhỏ hơn bằng đệ quy. Với mỗi cặp (i,j),
+                        thử tất cả điểm cắt k và lấy min. <strong style="color:#f87171">Nhược điểm:</strong> tính lại
+                        nhiều lần nên chậm với n lớn.</p>
+                    <div class="algo-code"><span class="fn">MCM_DC</span>(i, j):
+                        <span class="kw">if</span> i == j: <span class="kw">return</span> <span class="num">0</span>
+                        <span class="cm">// ma trận đơn, 0 phép nhân</span>
+
+                        minCost = ∞
+                        <span class="kw">for</span> k = i <span class="kw">to</span> j-<span class="num">1</span>:
+                        cost = <span class="fn">MCM_DC</span>(i, k)
+                        + <span class="fn">MCM_DC</span>(k+<span class="num">1</span>, j)
+                        + p[i-<span class="num">1</span>] × p[k] × p[j] <span class="cm">// chi phí nhân 2 cụm</span>
+                        <span class="kw">if</span> cost &lt; minCost:
+                        minCost = cost
+
+                        <span class="kw">return</span> minCost
+                    </div>
+                </div>
+
+                <!-- Tab 1: Bottom-Up DP -->
+                <div class="algo-panel" id="algo-panel-1">
+                    <div class="algo-complexity">
+                        <span class="badge badge-time">Time: O(n³)</span>
+                        <span class="badge badge-space">Space: O(n²)</span>
+                        <span class="badge badge-type">DP Bottom-Up</span>
+                    </div>
+                    <p class="algo-desc">Xây dựng bảng m[i][j] từ dưới lên — tính chuỗi độ dài 2 trước, rồi 3, ..., rồi
+                        n. Mỗi ô m[i][j] lưu số phép nhân tối thiểu để tính A[i..j].</p>
+                    <div class="algo-code"><span class="fn">MCM_BottomUp</span>(p[0..n]):
+                        n = số ma trận
+                        m[i][i] = <span class="num">0</span> ∀i <span class="cm">// chuỗi độ dài 1</span>
+
+                        <span class="kw">for</span> len = <span class="num">2</span> <span class="kw">to</span> n: <span
+                            class="cm">// độ dài chuỗi</span>
+                        <span class="kw">for</span> i = <span class="num">1</span> <span class="kw">to</span>
+                        n-len+<span class="num">1</span>:
+                        j = i + len - <span class="num">1</span>
+                        m[i][j] = ∞
+
+                        <span class="kw">for</span> k = i <span class="kw">to</span> j-<span class="num">1</span>: <span
+                            class="cm">// thử mọi điểm cắt</span>
+                        cost = m[i][k] + m[k+<span class="num">1</span>][j]
+                        + p[i-<span class="num">1</span>]×p[k]×p[j]
+                        <span class="kw">if</span> cost &lt; m[i][j]:
+                        m[i][j] = cost
+                        s[i][j] = k <span class="cm">// lưu điểm cắt tối ưu</span>
+
+                        <span class="kw">return</span> m[<span class="num">1</span>][n]
+                    </div>
+                </div>
+
+                <!-- Tab 2: Memoization -->
+                <div class="algo-panel" id="algo-panel-2">
+                    <div class="algo-complexity">
+                        <span class="badge badge-time">Time: O(n³)</span>
+                        <span class="badge badge-space">Space: O(n²)</span>
+                        <span class="badge badge-type">Top-Down + Cache</span>
+                    </div>
+                    <p class="algo-desc">Giống Chia để trị nhưng lưu kết quả vào bảng memo[i][j]. Trước khi tính, kiểm
+                        tra xem đã có kết quả chưa — nếu có thì dùng lại ngay (cache hit).</p>
+                    <div class="algo-code"><span class="fn">MCM_Memo</span>(i, j):
+                        <span class="kw">if</span> i == j: <span class="kw">return</span> <span class="num">0</span>
+                        <span class="kw">if</span> memo[i][j] ≠ -<span class="num">1</span>: <span class="cm">// cache
+                            hit!</span>
+                        <span class="kw">return</span> memo[i][j]
+
+                        minCost = ∞
+                        <span class="kw">for</span> k = i <span class="kw">to</span> j-<span class="num">1</span>:
+                        cost = <span class="fn">MCM_Memo</span>(i, k)
+                        + <span class="fn">MCM_Memo</span>(k+<span class="num">1</span>, j)
+                        + p[i-<span class="num">1</span>]×p[k]×p[j]
+                        <span class="kw">if</span> cost &lt; minCost:
+                        minCost = cost
+                        s[i][j] = k
+
+                        memo[i][j] = minCost <span class="cm">// lưu vào cache</span>
+                        <span class="kw">return</span> minCost
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let matrices = [];
+
+        function generateMatrixInputs() {
+            const n = parseInt(document.getElementById('numMatrices').value);
+            const container = document.getElementById('matricesContainer');
+            container.innerHTML = '';
+            matrices = [];
+
+            for (let i = 0; i < n; i++) {
+                matrices.push({
+                    rows: i === 0 ? 2 : matrices[i - 1].cols,
+                    cols: 3,
+                    values: []
+                });
+
+                const card = document.createElement('div');
+                card.className = 'matrix-card';
+                card.id = `matrix-card-${i}`;
+
+                card.innerHTML = `
+                    <div class="matrix-header">
+                        <div class="matrix-title">Ma trận A${i + 1}</div>
+                        <div class="matrix-size-info" id="size-info-${i}">
+                            ${matrices[i].rows} × ${matrices[i].cols}
+                        </div>
+                    </div>
+                    <div class="dimension-inputs">
+                        <div class="dimension-input">
+                            <label>Số hàng:</label>
+                            <input type="number" id="rows-${i}" min="1" max="10" 
+                                   value="${matrices[i].rows}" 
+                                   ${i > 0 ? 'disabled' : ''}
+                                   onchange="updateMatrixDimension(${i}, 'rows')">
+                        </div>
+                        <div class="dimension-input">
+                            <label>Số cột:</label>
+                            <input type="number" id="cols-${i}" min="1" max="10" 
+                                   value="${matrices[i].cols}" 
+                                   onchange="updateMatrixDimension(${i}, 'cols')">
+                        </div>
+                    </div>
+                    <div class="matrix-table-container" id="matrix-container-${i}"></div>
+                    <div class="validation-message" id="validation-${i}" style="display:none;"></div>
+                `;
+
+                container.appendChild(card);
+                createMatrixTable(i);
+            }
+
+            validateChain();
+        }
+
+        function updateMatrixDimension(index, dimension) {
+            const value = parseInt(document.getElementById(`${dimension}-${index}`).value);
+            matrices[index][dimension] = value;
+
+            // Update next matrix's rows if this is changing cols
+            if (dimension === 'cols' && index < matrices.length - 1) {
+                matrices[index + 1].rows = value;
+                document.getElementById(`rows-${index + 1}`).value = value;
+                document.getElementById(`size-info-${index + 1}`).textContent =
+                    `${matrices[index + 1].rows} × ${matrices[index + 1].cols}`;
+                createMatrixTable(index + 1);
+            }
+
+            document.getElementById(`size-info-${index}`).textContent =
+                `${matrices[index].rows} × ${matrices[index].cols}`;
+
+            createMatrixTable(index);
+            validateChain();
+        }
+
+        function createMatrixTable(index) {
+            const container = document.getElementById(`matrix-container-${index}`);
+            const rows = matrices[index].rows;
+            const cols = matrices[index].cols;
+
+            // Initialize values array if needed
+            if (!matrices[index].values.length) {
+                matrices[index].values = Array(rows).fill(0).map(() => Array(cols).fill(0));
+            } else {
+                // Resize values array
+                const newValues = Array(rows).fill(0).map(() => Array(cols).fill(0));
+                for (let i = 0; i < Math.min(rows, matrices[index].values.length); i++) {
+                    for (let j = 0; j < Math.min(cols, matrices[index].values[0]?.length || 0); j++) {
+                        newValues[i][j] = matrices[index].values[i][j];
+                    }
+                }
+                matrices[index].values = newValues;
+            }
+
+            let tableHTML = '<table class="matrix-table"><tbody>';
+            for (let i = 0; i < rows; i++) {
+                tableHTML += '<tr>';
+                for (let j = 0; j < cols; j++) {
+                    tableHTML += `<td>
+                        <input type="number" 
+                               value="${matrices[index].values[i][j]}" 
+                               onchange="updateMatrixValue(${index}, ${i}, ${j}, this.value)"
+                               step="0.01">
+                    </td>`;
+                }
+                tableHTML += '</tr>';
+            }
+            tableHTML += '</tbody></table>';
+            container.innerHTML = tableHTML;
+        }
+
+        function updateMatrixValue(matrixIndex, row, col, value) {
+            matrices[matrixIndex].values[row][col] = parseFloat(value) || 0;
+        }
+
+        function validateChain() {
+            let isValid = true;
+            let errorMessage = '';
+
+            for (let i = 0; i < matrices.length - 1; i++) {
+                const currentCols = matrices[i].cols;
+                const nextRows = matrices[i + 1].rows;
+
+                const validationDiv = document.getElementById(`validation-${i}`);
+                const card = document.getElementById(`matrix-card-${i}`);
+
+                if (currentCols !== nextRows) {
+                    isValid = false;
+                    errorMessage = `Lỗi: Số cột của A${i + 1} (${currentCols}) phải bằng số hàng của A${i + 2} (${nextRows})`;
+                    validationDiv.className = 'validation-message error';
+                    validationDiv.textContent = errorMessage;
+                    validationDiv.style.display = 'block';
+                    card.classList.add('error');
+                } else {
+                    validationDiv.style.display = 'none';
+                    card.classList.remove('error');
+                }
+            }
+
+            // Clear validation for last matrix
+            const lastValidation = document.getElementById(`validation-${matrices.length - 1}`);
+            if (lastValidation) {
+                lastValidation.style.display = 'none';
+            }
+            const lastCard = document.getElementById(`matrix-card-${matrices.length - 1}`);
+            if (lastCard) {
+                lastCard.classList.remove('error');
+            }
+
+            const validationResult = document.getElementById('validationResult');
+            const calculateBtn = document.getElementById('calculateBtn');
+
+            if (isValid) {
+                validationResult.innerHTML = `
+                    <div class="validation-message success">
+                        Chuỗi ma trận hợp lệ! Có thể thực hiện phép nhân.
+                    </div>
+                `;
+                calculateBtn.disabled = false;
+            } else {
+                validationResult.innerHTML = '';
+                calculateBtn.disabled = true;
+            }
+
+            return isValid;
+        }
+
+        function fillRandomValues() {
+            for (let i = 0; i < matrices.length; i++) {
+                for (let r = 0; r < matrices[i].rows; r++) {
+                    for (let c = 0; c < matrices[i].cols; c++) {
+                        matrices[i].values[r][c] = Math.floor(Math.random() * 10) + 1;
+                    }
+                }
+                createMatrixTable(i);
+            }
+        }
+
+        // Matrix multiplication function
+        function multiplyMatrices(A, B) {
+            const rowsA = A.length;
+            const colsA = A[0].length;
+            const colsB = B[0].length;
+
+            const result = Array(rowsA).fill(0).map(() => Array(colsB).fill(0));
+
+            for (let i = 0; i < rowsA; i++) {
+                for (let j = 0; j < colsB; j++) {
+                    for (let k = 0; k < colsA; k++) {
+                        result[i][j] += A[i][k] * B[k][j];
+                    }
+                }
+            }
+
+            return result;
+        }
+
+        // Compute actual matrix chain multiplication based on optimal parenthesization
+        function computeMatrixChain(matrices, split, i, j) {
+            if (i === j) {
+                return matrices[i - 1].values;
+            }
+
+            const k = split[i][j];
+            const left = computeMatrixChain(matrices, split, i, k);
+            const right = computeMatrixChain(matrices, split, k + 1, j);
+
+            return multiplyMatrices(left, right);
+        }
+
+        // Method 2: Dynamic Programming Bottom-Up
+        function matrixChainBottomUp(dims) {
+            const n = dims.length - 1;
+            const m = Array(n + 1).fill(0).map(() => Array(n + 1).fill(0));
+            const s = Array(n + 1).fill(0).map(() => Array(n + 1).fill(0));
+            const steps = [];
+
+            for (let len = 2; len <= n; len++) {
+                for (let i = 1; i <= n - len + 1; i++) {
+                    const j = i + len - 1;
+                    m[i][j] = Infinity;
+
+                    for (let k = i; k < j; k++) {
+                        const cost = m[i][k] + m[k + 1][j] + dims[i - 1] * dims[k] * dims[j];
+
+                        steps.push(`M[${i},${j}] với k=${k}: ${m[i][k]} + ${m[k + 1][j]} + ${dims[i - 1]}×${dims[k]}×${dims[j]} = ${cost}`);
+
+                        if (cost < m[i][j]) {
+                            m[i][j] = cost;
+                            s[i][j] = k;
+                        }
+                    }
+                }
+            }
+
+            return { cost: m[1][n], split: s, table: m, steps };
+        }
+
+        // Method 3: Top-Down with Memoization
+        function matrixChainMemoization(dims) {
+            const n = dims.length - 1;
+            const memo = Array(n + 1).fill(0).map(() => Array(n + 1).fill(-1));
+            const split = Array(n + 1).fill(0).map(() => Array(n + 1).fill(0));
+            const steps = [];
+
+            function mcm(i, j) {
+                if (i === j) return 0;
+                if (memo[i][j] !== -1) {
+                    steps.push(`[Cache] Sử dụng kết quả đã lưu M[${i},${j}] = ${memo[i][j]}`);
+                    return memo[i][j];
+                }
+
+                let minCost = Infinity;
+                let bestK = -1;
+
+                for (let k = i; k < j; k++) {
+                    const cost = mcm(i, k) + mcm(k + 1, j) + dims[i - 1] * dims[k] * dims[j];
+
+                    steps.push(`Tính M[${i},${j}] với k=${k}: cost = ${cost}`);
+
+                    if (cost < minCost) {
+                        minCost = cost;
+                        bestK = k;
+                    }
+                }
+
+                memo[i][j] = minCost;
+                split[i][j] = bestK;
+                steps.push(`[Save] Lưu M[${i},${j}] = ${minCost}, split tại k=${bestK}`);
+
+                return minCost;
+            }
+
+            const cost = mcm(1, n);
+            return { cost, split, memo, steps };
+        }
+
+        // Method 1: Divide and Conquer (using bottom-up for split points)
+        function matrixChainDivideConquer(dims) {
+            const steps = [];
+
+            function mcm(i, j, depth = 0) {
+                const indent = '  '.repeat(depth);
+                if (i === j) {
+                    steps.push(`${indent}M[${i},${j}] = 0 (ma trận đơn)`);
+                    return 0;
+                }
+
+                let minCost = Infinity;
+                let bestK = -1;
+
+                steps.push(`${indent}Tính M[${i},${j}]:`);
+
+                for (let k = i; k < j; k++) {
+                    const leftCost = mcm(i, k, depth + 1);
+                    const rightCost = mcm(k + 1, j, depth + 1);
+                    const cost = leftCost + rightCost + dims[i - 1] * dims[k] * dims[j];
+
+                    steps.push(`${indent}  k=${k}: ${leftCost} + ${rightCost} + ${dims[i - 1]}×${dims[k]}×${dims[j]} = ${cost}`);
+
+                    if (cost < minCost) {
+                        minCost = cost;
+                        bestK = k;
+                    }
+                }
+
+                steps.push(`${indent}=> Min M[${i},${j}] = ${minCost} (tại k=${bestK})`);
+                return minCost;
+            }
+
+            const n = dims.length - 1;
+            const cost = mcm(1, n);
+
+            // Get split points using bottom-up
+            const bottomUp = matrixChainBottomUp(dims);
+
+            return { cost, split: bottomUp.split, steps };
+        }
+
+        // Build optimal parenthesization
+        function buildParenthesization(s, i, j) {
+            if (i === j) {
+                return `A${i}`;
+            }
+            const k = s[i][j];
+            const left = buildParenthesization(s, i, k);
+            const right = buildParenthesization(s, k + 1, j);
+            return `(${left} × ${right})`;
+        }
+
+        // Main calculation function
+        function calculate() {
+            try {
+                if (!validateChain()) {
+                    throw new Error('Chuỗi ma trận không hợp lệ! Vui lòng kiểm tra lại kích thước.');
+                }
+
+                const n = matrices.length;
+                const dims = [matrices[0].rows];
+                for (let i = 0; i < n; i++) {
+                    dims.push(matrices[i].cols);
+                }
+
+                const method = document.querySelector('input[name="method"]:checked').value;
+                let result;
+                let methodName;
+
+                const startTime = performance.now();
+
+                switch (method) {
+                    case 'divide-conquer':
+                        methodName = 'Chia để trị (Đệ quy Top-Down)';
+                        result = matrixChainDivideConquer(dims);
+                        break;
+
+                    case 'bottom-up':
+                        methodName = 'Quy hoạch động Bottom-Up';
+                        result = matrixChainBottomUp(dims);
+                        break;
+
+                    case 'memoization':
+                        methodName = 'Top-Down với Memoization';
+                        result = matrixChainMemoization(dims);
+                        break;
+                }
+
+                const endTime = performance.now();
+                const executionTime = (endTime - startTime).toFixed(4);
+
+                // Compute final result matrix
+                const finalMatrix = computeMatrixChain(matrices, result.split, 1, n);
+
+                displayResults(result, dims, n, methodName, executionTime, finalMatrix);
+
+            } catch (error) {
+                document.getElementById('results').innerHTML = `
+                    <div class="error-box">
+                        <strong>Lỗi:</strong> ${error.message}
+                    </div>
+                `;
+                document.getElementById('results').classList.add('show');
+            }
+        }
+
+        function displayResults(result, dims, n, methodName, executionTime, finalMatrix) {
+            const parenthesization = buildParenthesization(result.split, 1, n);
+
+            let matrixInfo = '<div style="margin: 10px 0; display:flex; flex-wrap:wrap; gap:8px;">';
+            for (let i = 1; i <= n; i++) {
+                matrixInfo += `<span style="display:inline-block; padding:8px 14px; background:rgba(59,130,246,0.1); border:1px solid rgba(59,130,246,0.2); border-radius:8px; color:#60a5fa; font-family:'JetBrains Mono',monospace; font-size:0.9em;">
+                    A<sub>${i}</sub>: ${dims[i - 1]} × ${dims[i]}
+                </span>`;
+            }
+            matrixInfo += '</div>';
+
+            // Display input matrices
+            let inputMatricesHTML = '<div class="result-matrix">';
+            for (let i = 0; i < matrices.length; i++) {
+                inputMatricesHTML += `<div class="matrix-label">Ma trận A${i + 1} (${matrices[i].rows}×${matrices[i].cols}):</div>`;
+                inputMatricesHTML += '<table><tbody>';
+                for (let r = 0; r < matrices[i].rows; r++) {
+                    inputMatricesHTML += '<tr>';
+                    for (let c = 0; c < matrices[i].cols; c++) {
+                        inputMatricesHTML += `<td>${matrices[i].values[r][c].toFixed(2)}</td>`;
+                    }
+                    inputMatricesHTML += '</tr>';
+                }
+                inputMatricesHTML += '</tbody></table>';
+            }
+            inputMatricesHTML += '</div>';
+
+            // Display final result matrix
+            let finalMatrixHTML = '<div class="result-matrix">';
+            finalMatrixHTML += `<div class="matrix-label">Ma trận kết quả cuối cùng (${finalMatrix.length}×${finalMatrix[0].length}):</div>`;
+            finalMatrixHTML += '<table><tbody>';
+            for (let r = 0; r < finalMatrix.length; r++) {
+                finalMatrixHTML += '<tr>';
+                for (let c = 0; c < finalMatrix[0].length; c++) {
+                    finalMatrixHTML += `<td>${finalMatrix[r][c].toFixed(2)}</td>`;
+                }
+                finalMatrixHTML += '</tr>';
+            }
+            finalMatrixHTML += '</tbody></table></div>';
+
+            let tableHTML = '';
+            if (result.table) {
+                tableHTML = `
+                    <div class="computation-table">
+                        <h4>Bảng tính toán M[i,j] (số phép nhân):</h4>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>i\\j</th>
+                                    ${Array.from({ length: n }, (_, i) => `<th>${i + 1}</th>`).join('')}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                ${Array.from({ length: n }, (_, i) => `
+                                    <tr>
+                                        <th>${i + 1}</th>
+                                        ${Array.from({ length: n }, (_, j) => `
+                                            <td class="${result.table[i + 1][j + 1] > 0 ? 'highlight' : ''}">
+                                                ${result.table[i + 1][j + 1] || '-'}
+                                            </td>
+                                        `).join('')}
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            const stepsHTML = result.steps && result.steps.length > 0 ? `
+                <div class="result-item">
+                    <h3>Các bước tính toán</h3>
+                    <div class="steps-accordion" id="stepsAccordion">
+                        <div class="steps-accordion-header" onclick="toggleStepsAccordion()">
+                            <span>&#128196; ${result.steps.length} bước &mdash; nhấn để xem</span>
+                            <span class="steps-accordion-arrow">&#9660;</span>
+                        </div>
+                        <div class="steps-accordion-body">
+                            ${result.steps.slice(-50).map(step => {
+                let cls = 'step-line';
+                if (step.includes('[Cache]')) cls += ' cache-step';
+                else if (step.includes('[Save]')) cls += ' save-step';
+                else if (step.includes('=>')) cls += ' highlight-step';
+                return `<div class="${cls}">${step}</div>`;
+            }).join('')}
+                            ${result.steps.length > 50 ? '<div class="step-line" style="color:#475569;text-align:center;">... (hiển thị 50 bước cuối)</div>' : ''}
+                        </div>
+                    </div>
+                </div>
+            ` : '';
+
+            document.getElementById('results').innerHTML = `
+                <h2 class="results-title">Kết quả tính toán</h2>
+
+                <div class="result-item">
+                    <h3>Phương pháp &amp; Thống kê</h3>
+                    <div class="result-value">${methodName}</div>
+                    <div class="stat-row">
+                        <span class="stat-chip blue">&#9201; ${executionTime} ms</span>
+                        <span class="stat-chip green">&#10003; ${result.cost.toLocaleString()} phép nhân</span>
+                        <span class="stat-chip purple">&#128196; ${result.steps ? result.steps.length : 0} bước</span>
+                    </div>
+                </div>
+
+                <div class="result-item">
+                    <h3>Số phép nhân vô hướng tối ưu</h3>
+                    <div class="result-value" style="font-size:2em;color:#22c55e;text-align:center;">
+                        ${result.cost.toLocaleString()} phép nhân
+                    </div>
+                </div>
+
+                <div class="result-item">
+                    <h3>Cách đặt dấu ngoặc tối ưu</h3>
+                    <div class="optimal-path">
+                        <div style="font-size:1.2em;text-align:center;padding:14px;font-family:'JetBrains Mono',monospace;color:#22c55e;word-break:break-all;">
+                            ${parenthesization}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="result-item">
+                    <h3>Thông tin ma trận đầu vào</h3>
+                    ${matrixInfo}
+                    ${inputMatricesHTML}
+                </div>
+
+                <div class="result-item">
+                    <h3>Ma trận tích cuối cùng</h3>
+                    ${finalMatrixHTML}
+                </div>
+
+                ${tableHTML}
+
+                ${stepsHTML}
+            `;
+
+            document.getElementById('results').classList.add('show');
+        }
+
+        function resetForm() {
+            document.getElementById('numMatrices').value = 3;
+            generateMatrixInputs();
+            document.getElementById('method1').checked = true;
+            document.getElementById('results').classList.remove('show');
+            document.getElementById('results').innerHTML = '';
+        }
+
+        // ===== ALGORITHM MODAL =====
+        function openAlgoModal() {
+            const modal = document.getElementById('algoModal');
+            modal.classList.add('open');
+            // Auto-select tab matching current method
+            const method = document.querySelector('input[name="method"]:checked').value;
+            const tabIdx = method === 'divide-conquer' ? 0 : method === 'bottom-up' ? 1 : 2;
+            const tabs = document.querySelectorAll('.algo-tab');
+            switchAlgoTab(tabIdx, tabs[tabIdx]);
+        }
+        function closeAlgoModal() {
+            document.getElementById('algoModal').classList.remove('open');
+        }
+        function closeAlgoModalOverlay(e) {
+            if (e.target === document.getElementById('algoModal')) closeAlgoModal();
+        }
+        function switchAlgoTab(idx, btn) {
+            document.querySelectorAll('.algo-tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.algo-panel').forEach(p => p.classList.remove('active'));
+            btn.classList.add('active');
+            document.getElementById('algo-panel-' + idx).classList.add('active');
+        }
+        // Close modal on Escape
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeAlgoModal(); });
+
+        // ===== STEPS ACCORDION =====
+        function toggleStepsAccordion() {
+            const acc = document.getElementById('stepsAccordion');
+            if (acc) acc.classList.toggle('open');
+        }
+
+        // Initialize on load
+        generateMatrixInputs();
+    </script>
+</body>
+
+</html>
