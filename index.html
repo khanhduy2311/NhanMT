@@ -633,27 +633,45 @@
                 `;
             }
 
-            const stepsHTML = result.steps && result.steps.length > 0 ? `
+            // Build steps HTML with show-more support
+            const MAX_PREVIEW = 50;
+            let stepsHTML = '';
+            if (result.steps && result.steps.length > 0) {
+                const allSteps = result.steps;
+                const hasMore = allSteps.length > MAX_PREVIEW;
+                const previewSteps = hasMore ? allSteps.slice(0, MAX_PREVIEW) : allSteps;
+
+                function renderStep(step) {
+                    let cls = 'step-line';
+                    if (step.includes('[Cache]')) cls += ' cache-step';
+                    else if (step.includes('[Save]')) cls += ' save-step';
+                    else if (step.includes('=>')) cls += ' highlight-step';
+                    return `<div class="${cls}">${step}</div>`;
+                }
+
+                const previewHTML = previewSteps.map(renderStep).join('');
+                const remainingHTML = hasMore ? allSteps.slice(MAX_PREVIEW).map(renderStep).join('') : '';
+
+                stepsHTML = `
                 <div class="result-item">
                     <h3>Các bước tính toán</h3>
                     <div class="steps-accordion" id="stepsAccordion">
                         <div class="steps-accordion-header" onclick="toggleStepsAccordion()">
-                            <span>&#128196; ${result.steps.length} bước &mdash; nhấn để xem</span>
+                            <span>&#128196; ${allSteps.length} bước &mdash; nhấn để xem</span>
                             <span class="steps-accordion-arrow">&#9660;</span>
                         </div>
                         <div class="steps-accordion-body">
-                            ${result.steps.slice(-50).map(step => {
-                let cls = 'step-line';
-                if (step.includes('[Cache]')) cls += ' cache-step';
-                else if (step.includes('[Save]')) cls += ' save-step';
-                else if (step.includes('=>')) cls += ' highlight-step';
-                return `<div class="${cls}">${step}</div>`;
-            }).join('')}
-                            ${result.steps.length > 50 ? '<div class="step-line" style="color:#475569;text-align:center;">... (hiển thị 50 bước cuối)</div>' : ''}
+                            <div id="steps-preview">${previewHTML}</div>
+                            ${hasMore ? `
+                            <div id="steps-remaining" style="display:none;">${remainingHTML}</div>
+                            <div class="steps-show-more" id="stepsShowMore" onclick="toggleShowMoreSteps()">
+                                <span id="stepsShowMoreLabel">&#9660; Xem tất cả ${allSteps.length} bước</span>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
-                </div>
-            ` : '';
+                </div>`;
+            }
 
             document.getElementById('results').innerHTML = `
                 <h2 class="results-title">Kết quả tính toán</h2>
@@ -740,6 +758,20 @@
         function toggleStepsAccordion() {
             const acc = document.getElementById('stepsAccordion');
             if (acc) acc.classList.toggle('open');
+        }
+
+        // ===== SHOW MORE STEPS =====
+        function toggleShowMoreSteps() {
+            const remaining = document.getElementById('steps-remaining');
+            const label = document.getElementById('stepsShowMoreLabel');
+            const btn = document.getElementById('stepsShowMore');
+            if (!remaining) return;
+            const isHidden = remaining.style.display === 'none';
+            remaining.style.display = isHidden ? 'block' : 'none';
+            label.innerHTML = isHidden
+                ? '&#9650; Thu gọn'
+                : `&#9660; Xem tất cả ${remaining.querySelectorAll('.step-line').length + document.getElementById('steps-preview').querySelectorAll('.step-line').length} bước`;
+            btn.classList.toggle('expanded', isHidden);
         }
 
         // Initialize on load
